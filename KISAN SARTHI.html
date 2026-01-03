@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Farmer Guide — India</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  body{font-family:'Poppins',sans-serif;margin:0;background:#f4fbf8;color:#063}
+  nav{background:linear-gradient(90deg,#2e7d32,#1b5e20);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
+  nav .logo{font-weight:700;font-size:1.1rem;display:flex;gap:8px;align-items:center}
+  .container{max-width:1100px;margin:24px auto;padding:14px}
+  .card{background:#fff;border-radius:12px;padding:18px;box-shadow:0 6px 16px rgba(0,0,0,0.08);margin-bottom:16px}
+  h1,h2,h3,h4{margin:0 0 10px;color:#0b3a2b}
+  p.info{margin:6px 0;color:#567}
+  label{font-weight:600;margin-bottom:6px;display:block}
+  select{padding:10px;border-radius:8px;border:1px solid #ddd;min-width:200px}
+  button.btn{background:#2e7d32;color:#fff;padding:10px 14px;border-radius:8px;border:none;cursor:pointer;font-weight:600}
+  .weather-strip{border-radius:12px;padding:18px;color:white;display:flex;justify-content:space-between;align-items:center;gap:12px;background:linear-gradient(90deg,#ff8a65,#ffb186)}
+  .weather-item{text-align:center;flex:1}
+  .weather-emoji{font-size:22px;margin-bottom:6px}
+  .tiles{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap}
+  .tile{flex:1;min-width:140px;background:#fff;padding:14px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.06);text-align:center;cursor:pointer;font-weight:600}
+  .detail-section{margin-top:18px}
+  ul{margin:6px 0 12px 18px}
+  .scheme-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-top:14px}
+  .scheme{background:#e9f8f0;padding:14px;border-radius:10px;box-shadow:0 3px 8px rgba(0,0,0,0.05)}
+  .scheme strong{display:block;margin-bottom:6px}
+  .back-link{display:inline-block;margin-bottom:10px;color:#2e7d32;cursor:pointer;text-decoration:underline}
+  footer{margin-top:18px;text-align:center;color:#777;font-size:0.9rem}
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">🌾 <strong>KISAN SAARTHI</strong></div>
+</nav>
+
+<div class="container">
+  <div class="card">
+    <h1>KISAN SARTHI— India</h1>
+    <p class="info">Select your State & District to get Weather, Crop Recommendations, Fertilizer guidance, Precautions and Govt. Schemes.</p>
+
+    <div style="margin-top:12px;display:flex;gap:14px;flex-wrap:wrap">
+      <div>
+        <label>State</label>
+        <select id="stateSelect"></select>
+      </div>
+      <div>
+        <label>District</label>
+        <select id="districtSelect" disabled></select>
+      </div>
+      <div style="display:flex;align-items:end">
+        <button class="btn" id="showBtn">Show</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="detailsView" style="display:none"></div>
+
+  <footer>© 2025 KISAN SARTHI • Data is generalized for regions. Consult local Agri Dept/KVK for detailed recommendations.</footer>
+</div>
+
+<script>
+/* -------------------
+   STATE DATA (Sample: Rajasthan, extend similarly for all states as in my previous code)
+   ------------------- */
+const STATE_DATA = {
+  
+  "andhra_pradesh": {
+    name: "Andhra Pradesh",
+    weather:{temp:"18–40 °C",rainfall:"700–1200 mm",humidity:"60–80%"},
+    crops:["Rice","Maize","Cotton","Groundnut","Chili","Turmeric"],
+    fertilizers:["DAP (18:46:0) as basal for cereals","Urea split doses for N","MOP for potash needs","Use FYM/compost"],
+    precautions:["Use certified seeds","Follow recommended sowing windows","Use soil health card recommendations"],
+    districts: ["Alluri Sitharama Raju","Anakapalli","Anantapur","Annamayya","Bapatla","Chittoor","East Godavari","Eluru","Guntur","Kakinada","Krishna","Kurnool","Nandyal","NTR","Palnadu","Parvathipuram Manyam","Prakasam","Sri Potti Sriramulu Nellore","Sri Sathya Sai","Srikakulam","Tirupati","Visakhapatnam","Vizianagaram","West Godavari","YSR Kadapa"]
+  },
+
+  "arunachal_pradesh": {
+    name:"Arunachal Pradesh",
+    weather:{temp:"5–30 °C",rainfall:"1500–4000 mm",humidity:"70–90%"},
+    crops:["Rice","Maize","Millets","Potato","Ginger","Turmeric"],
+    fertilizers:["NPK balanced blends","Vermicompost and organic manures","Lime for acidic soils where required"],
+    precautions:["Terrace or contour farming in slopes","Manage soil acidity","Use disease-free seeds"],
+    districts:["Anjaw","Changlang","Dibang Valley","East Kameng","East Siang","Kamle","Kra Daadi","Kurung Kumey","Leparada","Lohit","Longding","Lower Dibang Valley","Lower Siang","Lower Subansiri","Namsai","Pakke-Kessang","Papum Pare","Shi Yomi","Siang","Tawang","Tirap","Upper Siang","Upper Subansiri","West Kameng","West Siang","Itanagar Capital Complex"]
+  },
+
+  "assam": {
+    name:"Assam",
+    weather:{temp:"6–38 °C",rainfall:"1500–3500 mm",humidity:"70–90%"},
+    crops:["Rice","Tea","Jute","Mustard","Potato"],
+    fertilizers:["Urea for paddy","Balanced NPK for jute","Compost for tea gardens"],
+    precautions:["Manage flooding/flood-tolerant varieties","Drain fields after heavy rains","Monitor stem borer and hispa in paddy"],
+    districts:["Baksa","Barpeta","Biswanath","Bongaigaon","Cachar","Charaideo","Chirang","Darrang","Dhemaji","Dhubri","Dibrugarh","Goalpara","Golaghat","Hailakandi","Hojai","Jorhat","Kamrup","Kamrup Metropolitan","Karbi Anglong","Karimganj","Kokrajhar","Lakhimpur","Majuli","Morigaon","Nagaon","Nalbari","Sivasagar","Sonitpur","South Salmara-Mankachar","Tinsukia","Udalguri","West Karbi Anglong","Bajali","Tamulpur"]
+  },
+
+  "bihar": {
+    name:"Bihar",
+    weather:{temp:"5–43 °C",rainfall:"800–1200 mm",humidity:"55–80%"},
+    crops:["Rice","Wheat","Maize","Pulses","Sugarcane","Potato","Litchi"],
+    fertilizers:["DAP, Urea with zinc where recommended","Use soil health card for micronutrients","Apply FYM/compost"],
+    precautions:["Use flood-resistant rice varieties in lowlands","Watch wheat yellow rust","Use certified seeds"],
+    districts:["Araria","Arwal","Aurangabad","Banka","Begusarai","Bhagalpur","Bhojpur","Buxar","Darbhanga","East Champaran","Gaya","Gopalganj","Jamui","Jehanabad","Kaimur","Katihar","Khagaria","Kishanganj","Lakhisarai","Madhepura","Madhubani","Munger","Muzaffarpur","Nalanda","Nawada","Patna","Purnia","Rohtas","Saharsa","Samastipur","Saran","Sheikhpura","Sheohar","Sitamarhi","Siwan","Supaul","Vaishali","West Champaran"]
+  },
+
+  "chhattisgarh": {
+    name:"Chhattisgarh",
+    weather:{temp:"10–44 °C",rainfall:"900–1600 mm",humidity:"50–80%"},
+    crops:["Rice","Maize","Pulses","Wheat","Oilseeds"],
+    fertilizers:["NPK blends, Urea as per crop","Use organic matter to improve soil structure"],
+    precautions:["Use recommended rice varieties for rainfed/irrigated systems","Prevent blast and stem borer"],
+    districts:["Balod","Baloda Bazar","Balrampur","Bastar","Bemetara","Bijapur","Bilaspur","Dantewada","Dhamtari","Durg","Gariaband","Gaurela Pendra Marwahi","Janjgir-Champa","Jashpur","Kabirdham","Kanker","Kondagaon","Korba","Koriya","Mahasamund","Mungeli","Narayanpur","Raigarh","Raipur","Rajnandgaon","Sukma","Surajpur","Surguja","Manendragarh-Chirmiri-Bharatpur","Khairagarh-Chhuikhadan-Gandai","Mohla-Manpur-Ambagarh Chowki","Sarangarh-Bilaigarh","Shakti"]
+  },
+
+  "goa": {
+    name:"Goa",
+    weather:{temp:"20–35 °C",rainfall:"2000–3500 mm",humidity:"70–90%"},
+    crops:["Rice","Coconut","Cashew","Vegetables","Spices"],
+    fertilizers:["NPK complexes, organic compost","Use drip where water is limited"],
+    precautions:["Manage salinity near coasts","Protect cashew from pests and fruit flies"],
+    districts:["North Goa","South Goa"]
+  },
+
+  "gujarat": {
+    name:"Gujarat",
+    weather:{temp:"5–46 °C",rainfall:"300–1200 mm",humidity:"25–70%"},
+    crops:["Groundnut","Cotton","Bajra","Mustard","Castor","Wheat"],
+    fertilizers:["Use sulfur-containing fertilizers on groundnut","Foliar micronutrients as needed"],
+    precautions:["Manage salinity in coastal areas","Use drought-tolerant varieties in arid zones"],
+    districts:["Ahmedabad","Amreli","Anand","Aravalli","Banaskantha","Bharuch","Bhavnagar","Botad","Chhota Udaipur","Dahod","Dang","Devbhoomi Dwarka","Gandhinagar","Gir Somnath","Jamnagar","Junagadh","Kheda","Kutch","Mahisagar","Mehsana","Morbi","Narmada","Navsari","Panchmahal","Patan","Porbandar","Rajkot","Sabarkantha","Surat","Surendranagar","Tapi","Vadodara","Valsad"]
+  },
+
+  "haryana": {
+    name:"Haryana",
+    weather:{temp:"4–46 °C",rainfall:"300–800 mm",humidity:"40–70%"},
+    crops:["Wheat","Rice","Cotton","Sugarcane","Mustard"],
+    fertilizers:["DAP and Urea for cereals","Balanced NPK and micronutrients","Use organic manures"],
+    precautions:["Promote water-efficient irrigation","Manage yellow rust in wheat"],
+    districts:["Ambala","Bhiwani","Charkhi Dadri","Faridabad","Fatehabad","Gurugram","Hisar","Jhajjar","Jind","Kaithal","Karnal","Kurukshetra","Mahendragarh","Nuh","Palwal","Panchkula","Panipat","Rewari","Rohtak","Sirsa","Sonipat","Yamunanagar"]
+  },
+
+  "himachal_pradesh": {
+    name:"Himachal Pradesh",
+    weather:{temp:"0–35 °C",rainfall:"800–1500 mm",humidity:"45–85%"},
+    crops:["Apple","Maize","Potato","Wheat","Barley"],
+    fertilizers:["Micronutrients for apple (Boron)","FYM and balanced NPK for hill crops"],
+    precautions:["Protect orchards from frost","Terracing to avoid erosion"],
+    districts:["Bilaspur","Chamba","Hamirpur","Kangra","Kinnaur","Kullu","Lahaul & Spiti","Mandi","Shimla","Sirmaur","Solan","Una"]
+  },
+
+  "jammu_kashmir": { 
+    name:"Jammu & Kashmir",
+    weather:{temp:"-5–35 °C",rainfall:"300–1500 mm",humidity:"40–80%"},
+    crops:["Apple","Saffron","Wheat","Maize","Walnut"],
+    fertilizers:["NPK blends, organic compost in orchards","Apply potash for apple quality"],
+    precautions:["Use frost and hail protection for orchards","Follow IPM for pests"],
+    districts:["Anantnag","Bandipora","Baramulla","Budgam","Doda","Ganderbal","Jammu","Kathua","Kishtwar","Kulgam","Kupwara","Poonch","Pulwama","Rajouri","Ramban","Reasi","Samba","Shopian","Srinagar","Udhampur"]
+  },
+
+  "jharkhand": {
+    name:"Jharkhand",
+    weather:{temp:"5–42 °C",rainfall:"1000–1600 mm",humidity:"55–85%"},
+    crops:["Rice","Maize","Pulses","Oilseeds","Vegetables"],
+    fertilizers:["NPK and organics for soil health","Use lime where acidic soils prevail"],
+    precautions:["Manage soil acidity","Use improved varieties"],
+    districts:["Bokaro","Chatra","Deoghar","Dhanbad","Dumka","East Singhbhum","Garhwa","Giridih","Godda","Gumla","Hazaribagh","Jamtara","Khunti","Koderma","Latehar","Lohardaga","Pakur","Palamu","Ramgarh","Ranchi","Sahebganj","Seraikela Kharsawan","Simdega","West Singhbhum"]
+  },
+
+  "karnataka": {
+    name:"Karnataka",
+    weather:{temp:"15–40 °C",rainfall:"600–2000 mm",humidity:"50–85%"},
+    crops:["Rice","Ragi (finger millet)","Coffee","Sugarcane","Maize","Coconut"],
+    fertilizers:["DAP, Urea, MOP as required","Use organic manures for coffee and plantation crops"],
+    precautions:["Manage coffee berry borer","Use integrated pest management for paddy"],
+    districts:["Bagalkot","Ballari","Belagavi","Bengaluru Rural","Bengaluru Urban","Bidar","Chamarajanagar","Chikkaballapur","Chikkamagaluru","Chitradurga","Dakshina Kannada","Davanagere","Dharwad","Gadag","Hassan","Haveri","Kalaburagi","Kodagu","Kolar","Koppal","Mandya","Mysuru","Raichur","Ramanagara","Shivamogga","Tumakuru","Udupi","Uttara Kannada","Vijayapura","Yadgir"]
+  },
+
+  "kerala": {
+    name:"Kerala",
+    weather:{temp:"20–36 °C",rainfall:"2500–3500 mm",humidity:"70–95%"},
+    crops:["Coconut","Rubber","Rice","Spices (Pepper, Cardamom)","Banana"],
+    fertilizers:["Use Neem cake in coconut","Organic matter for spices","Balanced NPK for paddy"],
+    precautions:["Control rhinoceros beetle in coconut","Manage leaf diseases in rubber"],
+    districts:["Alappuzha","Ernakulam","Idukki","Kannur","Kasaragod","Kollam","Kottayam","Kozhikode","Malappuram","Palakkad","Pathanamthitta","Thiruvananthapuram","Thrissur","Wayanad"]
+  },
+
+  "madhya_pradesh": {
+    name:"Madhya Pradesh",
+    weather:{temp:"6–45 °C",rainfall:"800–1400 mm",humidity:"35–75%"},
+    crops:["Soybean","Wheat","Rice","Maize","Pulses","Cotton"],
+    fertilizers:["DAP/Urea and gypsum for certain soils","Soil testing recommended"],
+    precautions:["Manage charcoal rot in soybean","Rotate crops to manage pests"],
+    districts:["Agar Malwa","Alirajpur","Anuppur","Ashoknagar","Balaghat","Barwani","Betul","Bhind","Bhopal","Burhanpur","Chhatarpur","Chhindwara","Damoh","Datia","Dewas","Dhar","Dindori","Guna","Gwalior","Harda","Hoshangabad","Indore","Jabalpur","Jhabua","Katni","Khandwa","Khargone","Mandla","Mandsaur","Morena","Narsinghpur","Neemuch","Panna","Raisen","Rajgarh","Ratlam","Rewa","Sagar","Satna","Sehore","Seoni","Shahdol","Shajapur","Sheopur","Shivpuri","Sidhi","Singrauli","Tikamgarh","Ujjain","Umaria","Vidisha"]
+  },
+
+  "maharashtra": {
+    name:"Maharashtra",
+    weather:{temp:"10–45 °C",rainfall:"400–2500 mm",humidity:"30–85%"},
+    crops:["Cotton","Sugarcane","Soybean","Jowar","Grapes","Onion"],
+    fertilizers:["DAP, Urea and complex NPK as per crop","Use potash for sugarcane","Drip irrigation recommended for horticulture"],
+    precautions:["Manage pink bollworm in cotton","Use drip for water efficiency"],
+    districts:["Ahmednagar","Akola","Amravati","Aurangabad","Beed","Bhandara","Buldhana","Chandrapur","Dhule","Gadchiroli","Gondia","Hingoli","Jalgaon","Jalna","Kolhapur","Latur","Mumbai City","Mumbai Suburban","Nagpur","Nanded","Nandurbar","Nashik","Osmanabad","Palghar","Parbhani","Pune","Raigad","Ratnagiri","Sangli","Satara","Sindhudurg","Solapur","Thane","Wardha","Washim","Yavatmal"]
+  },
+
+  "manipur": {
+    name:"Manipur",
+    weather:{temp:"3–34 °C",rainfall:"1300–2000 mm",humidity:"70–90%"},
+    crops:["Rice","Maize","Potato","Ginger"],
+    fertilizers:["NPK complexes and organic manures","Use terrace cultivation methods on slopes"],
+    precautions:["Prevent soil erosion on slopes","Use improved seed varieties"],
+    districts:["Bishnupur","Chandel","Churachandpur","Imphal East","Imphal West","Jiribam","Kakching","Kamjong","Kangpokpi","Noney","Pherzawl","Senapati","Tamenglong","Tengnoupal","Thoubal","Ukhrul"]
+  },
+
+  "meghalaya": {
+    name:"Meghalaya",
+    weather:{temp:"5–30 °C",rainfall:"1500–4000 mm",humidity:"75–95%"},
+    crops:["Rice","Maize","Potato","Orange","Ginger"],
+    fertilizers:["Lime for acidic soils","Organic compost and balanced NPK"],
+    precautions:["Choose varieties tolerant to high rainfall","Prevent soil erosion"],
+    districts:["East Garo Hills","East Jaintia Hills","East Khasi Hills","North Garo Hills","Ri-Bhoi","South Garo Hills","South West Garo Hills","South West Khasi Hills","West Garo Hills","West Jaintia Hills","West Khasi Hills"]
+  },
+
+  "mizoram": {
+    name:"Mizoram",
+    weather:{temp:"8–30 °C",rainfall:"1500–2800 mm",humidity:"75–95%"},
+    crops:["Rice","Maize","Ginger","Turmeric"],
+    fertilizers:["NPK complexes and organic manure","Use terraces and mulch"],
+    precautions:["Prevent soil erosion in jhum systems","Use disease-free planting material"],
+    districts:["Aizawl","Champhai","Hnahthial","Khawzawl","Kolasib","Lawngtlai","Lunglei","Mamit","Saitual","Serchhip","Siaha"]
+  },
+
+  "nagaland": {
+    name:"Nagaland",
+    weather:{temp:"5–30 °C",rainfall:"1200–2500 mm",humidity:"70–95%"},
+    crops:["Rice","Maize","Millets","Potato"],
+    fertilizers:["NPK and compost","Use localized organic amendments"],
+    precautions:["Use improved varieties in valleys","Manage soil erosion on slopes"],
+    districts:["Chumoukedima","Dimapur","Kiphire","Kohima","Longleng","Mokokchung","Mon","Niuland","Noklak","Peren","Phek","Shamator","Tseminyu","Tuensang","Wokha","Zunheboto"]
+  },
+
+  "odisha": {
+    name:"Odisha",
+    weather:{temp:"10–42 °C",rainfall:"1000–1600 mm",humidity:"60–85%"},
+    crops:["Rice","Pulses","Groundnut","Sugarcane"],
+    fertilizers:["DAP and Urea for paddy","Use zinc where deficient"],
+    precautions:["Use flood-tolerant varieties in lowlands","Monitor for brown plant hopper"],
+    districts:["Angul","Balangir","Balasore","Bargarh","Bhadrak","Boudh","Cuttack","Deogarh","Dhenkanal","Gajapati","Ganjam","Jagatsinghpur","Jajpur","Jharsuguda","Kalahandi","Kandhamal","Kendrapara","Keonjhar","Khordha","Koraput","Malkangiri","Mayurbhanj","Nabarangpur","Nayagarh","Nuapada","Puri","Rayagada","Sambalpur","Subarnapur","Sundargarh"]
+  },
+
+  "punjab": {
+    name:"Punjab",
+    weather:{temp:"2–45 °C",rainfall:"400–800 mm",humidity:"40–65%"},
+    crops:["Wheat","Rice","Cotton","Maize","Potato"],
+    fertilizers:["Urea, DAP; micro-nutrients e.g. Zinc for paddy","Practice balanced fertilization"],
+    precautions:["Avoid groundwater overextraction","Manage yellow rust in wheat"],
+    districts:["Amritsar","Barnala","Bathinda","Faridkot","Fatehgarh Sahib","Fazilka","Ferozepur","Gurdaspur","Hoshiarpur","Jalandhar","Kapurthala","Ludhiana","Mansa","Moga","Pathankot","Patiala","Rupnagar","Sangrur","SAS Nagar (Mohali)","SBS Nagar (Nawanshahr)","Sri Muktsar Sahib","Tarn Taran","Malerkotla"]
+  },
+
+  "rajasthan": {
+    name:"Rajasthan",
+    weather:{temp:"5–48 °C",rainfall:"200–700 mm (varies widely)",humidity:"20–60%"},
+    crops:["Bajra (Pearl Millet)","Jowar (Sorghum)","Mustard","Barley","Gram","Cotton (in irrigated pockets)"],
+    fertilizers:["Use gypsum in sodic soils","Use FYM for moisture retention","NPK as per soil test"],
+    precautions:["Use drought-tolerant varieties","Mulch and moisture conservation","Protect from heat stress and locusts in Kharif"],
+    districts:["Ajmer","Alwar","Anupgarh","Balotra","Banswara","Baran","Barmer","Beawar","Bharatpur","Bhilwara","Bikaner","Bundi","Chittorgarh","Churu","Dausa","Dholpur","Dungarpur","Hanumangarh","Jaipur","Jaisalmer","Jalore","Jhalawar","Jhunjhunu","Jodhpur","Karauli","Kekri","Khairthal-Tijara","Kota","Nagaur","Neem Ka Thana","Pali","Phalodi","Pratapgarh","Rajsamand","Salumbar","Sanchore","Sawai Madhopur","Shahpura","Sikar","Sirohi","Sri Ganganagar","Tonk","Udaipur","Didwana-Kuchaman","Gangapur City","Kotputli-Behror","Beawar","Balotra","Dudu"]
+  },
+
+  "sikkim": {
+    name:"Sikkim",
+    weather:{temp:"2–28 °C",rainfall:"1500–3000 mm",humidity:"70–90%"},
+    crops:["Rice","Potato","Cardamom","Orange","Vegetables"],
+    fertilizers:["Prefer organic; balanced NPK for vegetables","Use compost/green manure"],
+    precautions:["Use terrace farming to prevent erosion","Promote organic farming"],
+    districts:["East Sikkim","North Sikkim","South Sikkim","West Sikkim","Pakyong","Soreng"]
+  },
+
+  "tamil_nadu": {
+    name:"Tamil Nadu",
+    weather:{temp:"15–40 °C",rainfall:"600–1200 mm (varies coastal vs interior)",humidity:"50–85%"},
+    crops:["Rice","Sugarcane","Cotton","Groundnut","Millets","Coconut"],
+    fertilizers:["DAP and Urea for cereals","Potassium sulphate for cotton and sugarcane","Use micronutrient mixtures"],
+    precautions:["Control brown plant hopper and sheath blight","Use water-efficient irrigation in dry zones"],
+    districts:["Ariyalur","Chengalpattu","Chennai","Coimbatore","Cuddalore","Dharmapuri","Dindigul","Erode","Kallakurichi","Kanchipuram","Kanyakumari","Karur","Krishnagiri","Madurai","Mayiladuthurai","Nagapattinam","Namakkal","Nilgiris","Perambalur","Pudukkottai","Ramanathapuram","Ranipet","Salem","Sivaganga","Tenkasi","Thanjavur","Theni","Thiruvallur","Thiruvarur","Thoothukudi","Tiruchirappalli","Tirunelveli","Tirupattur","Tiruppur","Tiruvannamalai","Vellore","Villupuram","Virudhunagar"]
+  },
+
+  "telangana": {
+    name:"Telangana",
+    weather:{temp:"10–45 °C",rainfall:"600–1000 mm",humidity:"40–75%"},
+    crops:["Rice","Cotton","Maize","Chili","Paddy","Turmeric"],
+    fertilizers:["Urea, DAP and potash as per crop","Use micronutrients based on soil test"],
+    precautions:["Use drip irrigation in rainfed lands","Monitor bollworm in cotton"],
+    districts:["Adilabad","Bhadradri Kothagudem","Hyderabad","Jagtial","Jangaon","Jayashankar Bhupalpally","Jogulamba Gadwal","Kamareddy","Karimnagar","Khammam","Kumuram Bheem Asifabad","Mahabubabad","Mahbubnagar","Mancherial","Medak","Medchal-Malkajgiri","Mulugu","Nagarkurnool","Nalgonda","Narayanpet","Nirmal","Nizamabad","Peddapalli","Rajanna Sircilla","Rangareddy","Sangareddy","Siddipet","Suryapet","Vikarabad","Wanaparthy","Warangal Rural","Warangal Urban","Yadadri Bhuvanagiri"]
+  },
+
+  "tripura": {
+    name:"Tripura",
+    weather:{temp:"8–35 °C",rainfall:"1500–2500 mm",humidity:"70–90%"},
+    crops:["Rice","Rubber","Tea","Pineapple","Potato"],
+    fertilizers:["NPK 20:20:0 for upland crops","Organic compost in rubber and tea"],
+    precautions:["Manage waterlogging in monsoon","Use disease-resistant clones"],
+    districts:["Dhalai","Gomati","Khowai","North Tripura","Sepahijala","South Tripura","Unakoti","West Tripura"]
+  },
+
+  "uttar_pradesh": {
+    name:"Uttar Pradesh",
+    weather:{temp:"2–45 °C",rainfall:"700–1000 mm (varies)",humidity:"40–80%"},
+    crops:["Wheat","Rice","Sugarcane","Potato","Mustard","Maize"],
+    fertilizers:["DAP, Urea and NPK blends","Soil health card recommended for micronutrients"],
+    precautions:["Use recommended sowing dates for wheat and paddy","Control stem borer and pests"],
+    districts:["Agra","Aligarh","Ambedkar Nagar","Amethi","Amroha","Auraiya","Ayodhya","Azamgarh","Baghpat","Bahraich","Ballia","Balrampur","Banda","Barabanki","Bareilly","Basti","Bhadohi","Bijnor","Budaun","Bulandshahr","Chandauli","Chitrakoot","Deoria","Etah","Etawah","Farrukhabad","Fatehpur","Firozabad","Gautam Buddha Nagar","Ghaziabad","Ghazipur","Gonda","Gorakhpur","Hamirpur","Hapur","Hardoi","Hathras","Jalaun","Jaunpur","Jhansi","Kannauj","Kanpur Dehat","Kanpur Nagar","Kasganj","Kaushambi","Kushinagar","Lakhimpur Kheri","Lalitpur","Lucknow","Maharajganj","Mahoba","Mainpuri","Mathura","Mau","Meerut","Mirzapur","Moradabad","Muzaffarnagar","Pilibhit","Pratapgarh","Prayagraj","Raebareli","Rampur","Saharanpur","Sambhal","Sant Kabir Nagar","Shahjahanpur","Shamli","Shravasti","Siddharthnagar","Sitapur","Sonbhadra","Sultanpur","Unnao","Varanasi"]
+  },
+
+  "uttarakhand": {
+    name:"Uttarakhand",
+    weather:{temp:"0–40 °C",rainfall:"1000–2000 mm",humidity:"50–85%"},
+    crops:["Wheat","Rice","Barley","Potato","Apple","Litchi"],
+    fertilizers:["NPK complexes for valley crops","Organic matter for orchards"],
+    precautions:["Use terracing and contour farming","Protect orchards from frost"],
+    districts:["Almora","Bageshwar","Chamoli","Champawat","Dehradun","Haridwar","Nainital","Pauri Garhwal","Pithoragarh","Rudraprayag","Tehri Garhwal","Udham Singh Nagar","Uttarkashi"]
+  },
+
+  "west_bengal": {
+    name:"West Bengal",
+    weather:{temp:"7–40 °C",rainfall:"1200–2000 mm",humidity:"65–90%"},
+    crops:["Rice","Jute","Potato","Tea","Mustard","Vegetables"],
+    fertilizers:["NPK 20:20:0 for many regions","Urea for paddy; compost for tea"],
+    precautions:["Use flood-resistant varieties in low-lying plains","Protect tea from blister blight"],
+    districts:["Alipurduar","Bankura","Birbhum","Cooch Behar","Dakshin Dinajpur","Darjeeling","Hooghly","Howrah","Jalpaiguri","Jhargram","Kalimpong","Kolkata","Malda","Murshidabad","Nadia","North 24 Parganas","Paschim Bardhaman","Paschim Medinipur","Purba Bardhaman","Purba Medinipur","Purulia","South 24 Parganas","Uttar Dinajpur"]
+  },
+
+  /* UNION TERRITORIES */
+  "andaman_nicobar": {
+    name:"Andaman and Nicobar Islands",
+    weather:{temp:"23–32 °C",rainfall:"2000–3000 mm",humidity:"75–95%"},
+    crops:["Coconut","Paddy","Areca nut","Spices","Vegetables"],
+    fertilizers:["NPK complexes and organic compost","Use salt-tolerant varieties near coasts"],
+    precautions:["Manage salinity and strong winds","Use wind-resistant varieties"],
+    districts:["Nicobar","North and Middle Andaman","South Andaman"]
+  },
+
+  "chandigarh": {
+    name:"Chandigarh",
+    weather:{temp:"5–44 °C",rainfall:"700–1100 mm",humidity:"40–70%"},
+    crops:["Vegetables","Wheat","Rice","Flowers"],
+    fertilizers:["Use balanced NPK and micro-nutrients","Organic compost in gardens"],
+    precautions:["Use urban-adapted pest management","Efficient water use"],
+    districts:["Chandigarh"]
+  },
+
+  "dadra_daman_diu": {
+    name:"Dadra & Nagar Haveli and Daman & Diu",
+    weather:{temp:"20–38 °C",rainfall:"800–1500 mm",humidity:"60–85%"},
+    crops:["Rice","Coconut","Vegetables","Mango"],
+    fertilizers:["NPK and compost","Use drip for water saving"],
+    precautions:["Prevent salinity near coasts","Use pest control for fruit crops"],
+    districts:["Dadra & Nagar Haveli","Daman","Diu"]
+  },
+
+  "delhi": {
+    name:"Delhi",
+    weather:{temp:"2–46 °C",rainfall:"600–800 mm",humidity:"35–70%"},
+    crops:["Vegetables","Wheat (peri-urban)","Flowers","Urban horticulture"],
+    fertilizers:["Balanced NPK, organic compost for urban gardens"],
+    precautions:["Manage air pollution effects","Use protected cultivation in small farms"],
+    districts:["Central Delhi","East Delhi","New Delhi","North Delhi","North East Delhi","North West Delhi","Shahdara","South Delhi","South East Delhi","South West Delhi","West Delhi"]
+  },
+
+  "jammu_kashmir_ut": { /* note: union territory named already above as jammu_kashmir — keep as key unique if needed */
+    name:"Jammu & Kashmir (UT)",
+    weather:{temp:"-5–35 °C",rainfall:"300–1500 mm",humidity:"40–80%"},
+    crops:["Apple","Saffron","Wheat","Peas","Walnut"],
+    fertilizers:["NPK and organic matter in orchards","Micronutrients as needed"],
+    precautions:["Protect orchards from frost/hail","Use IPM in paddy/wheat"],
+    districts:["Anantnag","Bandipora","Baramulla","Budgam","Doda","Ganderbal","Jammu","Kathua","Kishtwar","Kulgam","Kupwara","Poonch","Pulwama","Rajouri","Ramban","Reasi","Samba","Shopian","Srinagar","Udhampur"]
+  },
+
+  "ladakh": {
+    name:"Ladakh",
+    weather:{temp:"-20–25 °C (cold), short growing season",rainfall:"<200 mm",humidity:"20–40%"},
+    crops:["Barley","Peas","Short-season vegetables","Apricot"],
+    fertilizers:["Small doses of NPK; organic compost useful","Use short-duration varieties"],
+    precautions:["Short season: use greenhouses/tunnels","Protect from frost and wind"],
+    districts:["Kargil","Leh"]
+  },
+
+  "lakshadweep": {
+    name:"Lakshadweep",
+    weather:{temp:"25–32 °C",rainfall:"2000–3000 mm",humidity:"75–95%"},
+    crops:["Coconut","Vegetables (coastal)"],
+    fertilizers:["NPK complexes and organic manure","Use salt-tolerant practices"],
+    precautions:["Prevent salinity intrusion","Protect coconut from pests"],
+    districts:["Lakshadweep"]
+  },
+
+  "puducherry": {
+    name:"Puducherry",
+    weather:{temp:"20–40 °C",rainfall:"900–1200 mm",humidity:"60–80%"},
+    crops:["Rice","Coconut","Sugarcane","Vegetables"],
+    fertilizers:["DAP, Urea and compost as required","Follow soil health card"],
+    precautions:["Prevent salinity in coastal areas","Use pest-resistant varieties"],
+    districts:["Karaikal","Mahe","Puducherry","Yanam"]
+  },
+  
+  // ... add all states and UTs here (use my previous dataset)
+};
+// Master crop database
+const CROP_DATA = {
+  "Wheat":     { name:"Wheat", avgYield:[3500,4000], seedRate:100, msp:2275 },
+  "Rice":      { name:"Rice", avgYield:[2500,3200], seedRate:45,  msp:2300 },
+  "Maize":     { name:"Maize", avgYield:[2000,3000], seedRate:25,  msp:2225 },
+  "Pulses":    { name:"Pulses", avgYield:[800,1000], seedRate:18,  msp:6250 },
+  "Sugarcane": { name:"Sugarcane", avgYield:[70000,80000], seedRate:1000, msp:315 },
+  "Cotton":    { name:"Cotton", avgYield:[1500,2000], seedRate:20,  msp:7121 },
+  "Mustard":   { name:"Mustard", avgYield:[1200,1500], seedRate:6,  msp:5650 },
+  "Groundnut": { name:"Groundnut", avgYield:[1800,2200], seedRate:120, msp:5850 },
+  "Soybean":   { name:"Soybean", avgYield:[1000,1500], seedRate:75,  msp:4600 },
+  "Barley":    { name:"Barley", avgYield:[2500,3000], seedRate:100, msp:2200 },
+  "Bajra":     { name:"Bajra", avgYield:[1500,2500], seedRate:4,   msp:2500 },
+  "Jowar":     { name:"Jowar", avgYield:[1200,2000], seedRate:10,  msp:3100 },
+  "Ragi":      { name:"Ragi", avgYield:[1200,1800], seedRate:10,  msp:3800 },
+  "Potato":    { name:"Potato", avgYield:[20000,25000], seedRate:2000, msp:2200 },
+  "Onion":     { name:"Onion", avgYield:[15000,20000], seedRate:1000, msp:1500 },
+  "Jute":      { name:"Jute", avgYield:[2000,3000], seedRate:5,   msp:5050 },
+  "Turmeric":  { name:"Turmeric", avgYield:[6000,8000], seedRate:250, msp:7000 },
+  "Chili":     { name:"Chili", avgYield:[2000,3000], seedRate:2,   msp:10000 },
+  "Coconut":   { name:"Coconut", avgYield:[10000,12000], seedRate:50, msp:2700 },
+  "Banana":    { name:"Banana", avgYield:[30000,35000], seedRate:1000, msp:1500 },
+  "Tea":       { name:"Tea", avgYield:[2000,3000], seedRate:50, msp:4000 },
+  "Coffee":    { name:"Coffee", avgYield:[800,1200], seedRate:50, msp:4500 }
+};
+
+/* -------------------
+   DOM & Logic
+   ------------------- */
+const stateSelect = document.getElementById('stateSelect');
+const districtSelect = document.getElementById('districtSelect');
+const showBtn = document.getElementById('showBtn');
+const detailsView = document.getElementById('detailsView');
+
+function populateStates(){
+  stateSelect.innerHTML = '<option value="">-- Select State --</option>';
+  Object.keys(STATE_DATA).forEach(k=>{
+    const opt = document.createElement('option');
+    opt.value = k; opt.textContent = STATE_DATA[k].name;
+    stateSelect.appendChild(opt);
+  });
+}
+populateStates();
+
+stateSelect.addEventListener('change', e=>{
+  const key = e.target.value;
+  districtSelect.innerHTML = '<option value="">-- Select District --</option>';
+  if(!key){ districtSelect.disabled=true; return; }
+  const st = STATE_DATA[key];
+  st.districts.forEach(d=>{
+    const opt=document.createElement('option');opt.value=d;opt.textContent=d;
+    districtSelect.appendChild(opt);
+  });
+  districtSelect.disabled=false;
+});
+
+showBtn.addEventListener('click', ()=>{
+  const stateKey = stateSelect.value;
+  const district = districtSelect.value;
+  if(!stateKey || !district) return alert("Please select state & district");
+  renderDetails(stateKey,district);
+});
+
+function renderDetails(stateKey,district){
+  const st = STATE_DATA[stateKey];
+  const weather=st.weather, crops=st.crops, fert=st.fertilizers, prec=st.precautions;
+
+  detailsView.style.display='block';
+  detailsView.innerHTML=`
+    <div class="card">
+      <div class="back-link" onclick="detailsView.style.display='none'">← Back</div>
+      <h2>${district}, ${st.name}</h2>
+
+      <div class="weather-strip" style="margin:14px 0">
+        <div class="weather-item"><div class="weather-emoji">🌡️</div><b>Temperature</b><div>${weather.temp}</div></div>
+        <div class="weather-item"><div class="weather-emoji">💧</div><b>Rainfall</b><div>${weather.rainfall}</div></div>
+        <div class="weather-item"><div class="weather-emoji">💨</div><b>Humidity</b><div>${weather.humidity}</div></div>
+      </div>
+
+      <h3>Recommended Crops</h3>
+      <ul>${crops.map(c=>`<li>${c}</li>`).join('')}</ul>
+
+      <div class="card" style="margin-top:14px">
+  <h3>🌾 Crop Yield Calculator</h3>
+  <label>Choose Crop</label>
+  <select id="calcCrop"></select>
+
+  <label>Land Area (in hectares)</label>
+  <input type="number" id="calcArea" placeholder="e.g. 2" style="padding:8px;border:1px solid #ccc;border-radius:8px;width:100%">
+
+  <label>Seeds Used (kg or number)</label>
+  <input type="number" id="calcSeeds" placeholder="e.g. 180" style="padding:8px;border:1px solid #ccc;border-radius:8px;width:100%">
+
+  <button class="btn" style="margin-top:10px" onclick="runCalculator()">Calculate</button>
+  <div id="calcResult" style="margin-top:12px;font-weight:500;color:#063"></div>
+</div>
+
+
+      <div class="tiles">
+        <div class="tile" onclick="showTab('guide')">🌱 Growing Guide</div>
+        <div class="tile" onclick="showTab('care')">🛠 Crop Care</div>
+        <div class="tile" onclick="showTab('seed')">🌾 Seed Quality</div>
+        <div class="tile" onclick="showTab('schemes')">🏛 Govt. Schemes</div>
+      </div>
+
+      <div id="tabContent" class="detail-section"></div>
+    </div>
+  `;
+
+  const cropSelect = document.getElementById('calcCrop');
+if(cropSelect){
+  cropSelect.innerHTML = '<option value="">-- Select Crop --</option>';
+  st.crops.forEach(c=>{
+     const cropObj = CROP_DATA[c];   // get full crop data from master list
+    if(cropObj){
+      const opt = document.createElement('option');
+      opt.value = cropObj.name;
+      opt.textContent = cropObj.name;
+      cropSelect.appendChild(opt);
+    }
+  });
+}
+
+  window.showTab=function(tab){
+    const div=document.getElementById('tabContent');
+    if(tab==='guide'){
+      div.innerHTML=`<h3>Growing Guide</h3><ul>
+        <li>Follow KVK sowing date recommendations.</li>
+        <li>Soil test and apply nutrients accordingly.</li>
+        <li>Use drought/flood-tolerant varieties where needed.</li></ul>`;
+    }
+    if(tab==='care'){
+      div.innerHTML=`<h3>Crop Care</h3><ul>
+        <li>Scout fields weekly for pests/disease.</li>
+        <li>Use IPM and avoid pesticide overuse.</li>
+        <li>Apply nitrogen in splits for cereals.</li></ul>`;
+    }
+    if(tab==='seed'){
+      div.innerHTML=`<h3>Seed Quality</h3><ul>
+        <li>Use certified seeds from authorized dealers.</li>
+        <li>Adopt high-yielding varieties suitable for your district.</li></ul>`;
+    }
+    if(tab==='schemes'){
+      div.innerHTML=`<h3>Government Schemes & Policies</h3>
+        <div class="scheme-grid">
+          <div class="scheme"><strong>🆔 Kisan Credit Card</strong> Easy access to credit with low interest rates.</div>
+          <div class="scheme"><strong>🌾 PMFBY Crop Insurance</strong> Risk coverage for crop losses due to natural calamities.</div>
+          <div class="scheme"><strong>💰 PM-KISAN</strong> Direct income support of ₹6000/year for small farmers.</div>
+          <div class="scheme"><strong>📈 MSP Scheme</strong> Assured Minimum Support Price for crops.</div>
+          <div class="scheme"><strong>💧 Irrigation Schemes</strong> PMKSY for efficient water management.</div>
+          <div class="scheme"><strong>🧪 Soil Health Card</strong> Free soil testing and nutrient recommendations.</div>
+          <div class="scheme"><strong>🌱 Organic Farming Mission</strong> Subsidies for adopting organic methods.</div>
+          <div class="scheme"><strong>🚜 Farm Mechanization</strong> Support for modern equipment and custom hiring centers.</div>
+        </div>`;
+    }
+  }
+}
+function runCalculator(){
+  const cropName = document.getElementById('calcCrop').value;
+   console.log("Selected crop:", cropName);
+  const area = parseFloat(document.getElementById('calcArea').value);
+  const seeds = parseFloat(document.getElementById('calcSeeds').value);
+
+  if(!cropName || !area || !seeds){
+    return alert("Please fill all inputs");
+  }
+
+  // lookup crop data from master dictionary
+  const crop = CROP_DATA[cropName];
+  if(!crop){
+    return alert("Crop data not available for the selected crop. Please check CROP_DATA.");
+  }
+
+  const {low,high,lowVal,highVal,suggestion} = calculateYield(crop,area,seeds);
+
+  document.getElementById('calcResult').innerHTML = `
+    Estimated Yield: ${Math.round(low)} – ${Math.round(high)} kg 
+    (≈${Math.round(low/100)}–${Math.round(high/100)} quintals)<br>
+    Net Value: ₹${Math.round(lowVal).toLocaleString()} – ₹${Math.round(highVal).toLocaleString()}<br>
+    Suggestion: ${suggestion}
+  `;
+}
+
+
+function calculateYield(crop, landArea, seeds){
+  const avg = (crop.avgYield[0] + crop.avgYield[1]) / 2;
+  const expected = avg * landArea;
+
+  const idealSeeds = crop.seedRate * landArea;
+  let factor = seeds / idealSeeds;
+
+  if(factor < 0.5) factor = factor;      // too few seeds → yield falls
+  else if(factor > 1.2) factor = 1.1;    // too many seeds → cap at +10%
+  else factor = factor;
+
+  const adjusted = expected * factor;
+  const low = adjusted * 0.9;
+  const high = adjusted * 1.1;
+
+  const lowVal = (low/100) * crop.msp;   // MSP is per quintal (100 kg)
+  const highVal = (high/100) * crop.msp;
+
+  let suggestion = "";
+  if(seeds < idealSeeds*0.8){
+    suggestion = "⚠️ You should sow more seeds for optimum yield.";
+  } else if(seeds > idealSeeds*1.2){
+    suggestion = "⚠️ You have sown more than recommended, yield might not increase much.";
+  } else {
+    suggestion = "✅ Good seed rate for optimum yield.";
+  }
+
+  return {low,high,lowVal,highVal,suggestion};
+}
+
+</script>
+</body>
+</html>
